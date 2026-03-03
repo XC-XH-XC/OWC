@@ -1,0 +1,54 @@
+// 这部分代码应该插入到您的 system/controlDict 文件的末尾
+
+functions
+{
+    // ==========================================================
+    // 1. 测定气室内部气压 (用于计算 Delta P)
+    // ==========================================================
+    chamberPressure
+    {
+        type            probes;
+        libs            ("libsampling.so");
+        name            probes;
+        
+        writeControl    timeStep;   // 或根据需要设置为 writeTime
+        writeInterval   1;
+        
+        // 探针位置：请放置在 OWC 气室内部空气域的一个坐标点上
+        // 请务必根据您的 mesh 几何修改 (X, Y, Z) 坐标
+        probeLocations
+        (
+            (10.5 1.5 0)  // 假设 X=10.5是气室中间, Y=1.5是水面以上的冷空气区（坐标仅为示例）
+        );
+        
+        fields
+        (
+            p         // 提取总压
+            p_rgh     // 提取去除静水压后的动压
+        );
+    }
+
+    // ==========================================================
+    // 2. 测定通过顶部小孔的空气流量 (用于计算 Q_air)
+    // ==========================================================
+    orificeFlowRate
+    {
+        type            surfaceFieldValue;
+        libs            ("libfieldFunctionObjects.so");
+        
+        writeControl    timeStep;
+        writeInterval   1;
+        log             true;
+        writeFields     false;
+        
+        regionType      patch;
+        name            orifice;      // 请确保您的 blockMesh/snappy 中顶部小孔的边界命名为 'orifice'
+        operation       sum;          // 对截面流量 phi 进行面积分计算总流量
+        
+        fields
+        (
+            phi           // phi = U * Sf (体积流量 m^3/s)
+        );
+    }
+}
+// 计算获能(Power)： 每一时刻的 提取功率 P = p (探针处的气压相对大气的压差) * phi (小孔处面积分的流量)

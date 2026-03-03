@@ -1,0 +1,69 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2106                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    object      pointDisplacement;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 0 0 0 0 0];
+
+internalField   uniform (0 0 0);
+
+boundaryField
+{
+    // 前墙：指定幅值和频率的上下（Y方向）运动
+    frontWall
+    {
+        type            oscillatingDisplacement;
+        amplitude       (0 0.05 0); // Y方向振幅 0.05m (5cm)，根据需要修改
+        omega           6.28318;    // 圆频率 2*pi/T (假设周期 T=1s波浪)，根据波浪周期修改
+        value           uniform (0 0 0);
+    }
+
+    // 气室顶部的小孔：保持固定
+    orifice
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+
+    // 其他固定表面（水槽底部、后墙、两侧边界等）
+    fixedWalls
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+    
+    // 造波机入口和消波区出口（保持不动，仅内部网格随前墙做自适应变形）
+    inlet
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+    outlet
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+    atmosphere
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+
+    // 2D模拟必须的空边界
+    frontAndBack
+    {
+        type            empty;
+    }
+}
+// ************************************************************************* //

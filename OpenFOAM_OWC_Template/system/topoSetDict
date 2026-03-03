@@ -1,0 +1,72 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2106                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      topoSetDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+actions
+(
+    // 1. 挖出 OWC 气室的前墙空间 (假设位于 X=0.98~1.0, Y=0.65~1.2) - 这是可动墙
+    {
+        name    frontWallCellSet;
+        type    cellSet;
+        action  new;
+        source  boxToCell;
+        sourceInfo
+        {
+            // OWC可动前墙包围的 Box 区域坐标 (根据您未来的具体模型尺寸调整)
+            box (0.98 0.65 -1) (1.0 1.2 1);
+        }
+    }
+    
+    // 2. 挖出 OWC 气室的后墙空间 (假设位于 X=1.20~1.22, Y=0.65~1.2) - 这是固定墙
+    {
+        name    backWallCellSet;
+        type    cellSet;
+        action  new;
+        source  boxToCell;
+        sourceInfo
+        {
+            // OWC固定后墙包围的 Box 区域坐标 
+            box (1.20 0.65 -1) (1.22 1.2 1);
+        }
+    }
+
+    // 3. 将前面选中的两个墙体 CellSet 合并为一个组合去除区域
+    {
+        name    removeCells;
+        type    cellSet;
+        action  new;
+        source  cellToCell;
+        sourceInfo
+        {
+            set frontWallCellSet;
+        }
+    }
+    {
+        name    removeCells;
+        type    cellSet;
+        action  add;
+        source  cellToCell;
+        sourceInfo
+        {
+            set backWallCellSet;
+        }
+    }
+
+    // -- 后面的步骤是将这些选出的网格扣除，并在扣除的面上定义 'frontWall' 和 'backWall' 等边界 --
+    // 这个可以通过运行: topoSet 然后运行: subsetMesh -overwrite removeCells -patch 'wall' 来实现
+    // (需要一个简短的 bash/python 脚本来将 subsetMesh 生成的边界分别重命名为 frontWall 和 backWall 以及 orifice)
+);
+
+// ************************************************************************* //

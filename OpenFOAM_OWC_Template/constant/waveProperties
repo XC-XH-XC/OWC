@@ -1,0 +1,79 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2106                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      waveProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// 水深参数 (m), 教授提到的 80cm
+seaLevel        0.8;
+
+// 在波峰或波谷进行网格松弛时的参考基准，通常与seaLevel一致
+seaLevelAsReference true;
+
+
+// ===================================
+// 波浪生成的类型与参数设定
+// ===================================
+// 在 waves2Foam 中，Stokes I (线性波), II, V 阶波是最常用的规则波理论
+relaxationNames (inletZone outletZone);
+
+initializationName inletZone;
+
+inletZone
+{
+    waveType    stokesFirst;  // 使用线性波形 (若波高大，可换用 stokesSecond 或 stokesFifth)
+    
+    // 波浪参数：
+    T           1.5;          // 波浪周期(s)，此处假设为 1.5s
+    H           0.06;         // 波高(m)，从波峰到波谷的高度，假设为 6cm
+    
+    // 波浪传播方向
+    waveDir     0.0;          // 0度代表沿 X 轴正向传播
+    
+    // 波浪相位
+    phase       0.0;
+
+    // 松弛区类型和位置 (造波区)
+    relaxationZone
+    {
+        relaxationScheme spatial;
+        relaxationShape  rectangular;
+        
+        // 松弛区尺寸 (避免前墙反射回来的波浪影响造波入口)
+        // 假设位于水槽最左侧，长度 0.5m
+        relaxType   INLET;
+        startX      (0.0 -1.0 -1.0); // 其实只需要X坐标
+        endX        (0.5  2.0  1.0); // 长度为一个波长以内
+        orientation (1.0  0.0  0.0);
+    }
+}
+
+outletZone
+{
+    wakeType    none; // 消波侧不需要设定波形，只消波
+    
+    relaxationZone
+    {
+        relaxationScheme spatial;
+        relaxationShape  rectangular;
+        
+        // 末端消波区 (吸收所有穿过 OWC 装置的透射波)
+        // 假设位于水槽最右侧，长度 0.5m
+        relaxType   OUTLET;
+        startX      (1.5 -1.0 -1.0); // 起点 X=1.5
+        endX        (2.0  2.0  1.0); // 终点 X=2.0
+        orientation (1.0  0.0  0.0);
+    }
+}
+
+// ************************************************************************* //

@@ -1,0 +1,29 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2106                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      dynamicMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dynamicFvMesh   dynamicMotionSolverFvMesh;
+
+motionSolverLibs ( "libfvMotionSolvers.so" );
+
+// 使用拉普拉斯方程求解网格位移，非常适合这种局部边界有振荡变形的情况
+motionSolver    displacementLaplacian;
+
+// diffusivity (扩散率) 决定了网格变形的剧烈程度是如何在空间分布的
+// inverseDistance 表示距离运动边界（frontWall）越近，网格保持得越硬（变形越小），
+// 变形主要由稍微远离前墙的网格承担，这样能最大程度避免动边界附近的网格被压扁。
+diffusivity     inverseDistance (frontWall);
+
+// ************************************************************************* //
